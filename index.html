@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <script type="text/javascript" src="AFECTACIONES_2008.js"></script>
+    <script type="text/javascript" src="INFRA_ITRF2008.js"></script>
+    <script type="text/javascript" src="VIAS_COMITRF2008.js"></script>
+
+    <style>
+        #map {
+            width: 100%;
+            height: 805px;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <nav>
+        <div class="collapse navbar-collapse" id="navbarTogglerDemo01">
+            <form class="form-inline my-2 my-lg-0" style="display: flex; justify-content: center; align-items: center;">
+                <img src="./images/SEDATU_RAN_2025.jpg" width="650" height="80">
+                <a href="https://lookerstudio.google.com/reporting/688a1f1c-f9e0-4f35-916e-9abc270088c6/page/ppeFF">
+                    <img src="./images/año-mujer-indigena.jpg" width="180" height="80">
+                </a>
+                <h1 style="margin-left: 10px; font-size: 1.5rem; font-weight: bold; color: #0B5F0D;">COORDINACIÓN DE DESARROLLO E IMPLEMENTACIÓN DEL USO DE SIG</h1>
+            </form>
+        </div>
+    </nav>
+    
+    
+
+    <div id='map'></div>
+
+    <script>
+
+        // Crea el mapa
+        var map = L.map('map')
+            .setView([19.871761015623395, -98.89154013628952], 15); 
+
+        // Añadimos el tileLayer de OpenStreetMap
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        function getColor(d) {
+            return d == 'PARCELA' ? '#CD00FB' :
+                d == 'BARRANCA'  ? '#D517FF' :
+                d == 'CAMINO_INTERPARCELARIO'  ? '#000000' :
+                d == 'DDV_FFCC' ? '#3FA080' : '#3FA080';
+        }
+
+        function style(feature) {
+            return {
+                weight: 2,
+                opacity: 1,
+                color: 'white',
+                dashArray: '3',
+                fillOpacity: 0.7,
+                fillColor: getColor(feature.properties.NOM_AFECTA)
+            };
+        }
+
+        function highlightFeature(e) {
+            var layer = e.target;
+
+            layer.setStyle({
+                weight: 5,
+                color: '#666',
+                dashArray: '',
+                fillOpacity: 0.7
+            });
+
+            layer.bringToFront();
+            info.update(layer.feature.properties);
+        }
+
+        // Creamos los objetos GeoJSON
+        const afectacionesLayer = L.geoJson(AFECTACIONES_2008, {
+            style,
+            onEachFeature
+        });
+
+        const infraLayer = L.geoJson(INFRA_ITRF2008, {
+            style: function() {
+                return lineStyle('#FF5733'); 
+            }
+        });
+        
+        const viasLayer = L.geoJson(VIAS_COMITRF2008, {
+            style: function() {
+                return lineStyle('#4CAF50'); 
+            }
+        });
+                
+        function resetHighlight(e) {
+            afectacionesLayer.resetStyle(e.target);
+            info.update();
+        }
+
+        function zoomToFeature(e) {
+            map.fitBounds(e.target.getBounds());
+        }
+
+        function onEachFeature(feature, layer) {
+            layer.on({
+                mouseover: highlightFeature,
+                mouseout: resetHighlight,
+                click: zoomToFeature
+            });
+        }
+        
+        // Función para definir el color de las líneas con un parámetro de color
+        function lineStyle(color) {
+            return {
+                weight: 3,       // Grosor de la línea
+                opacity: 1,      // Opacidad de la línea
+                color: color     // Color de la línea, que se pasa como parámetro
+            };
+        }
+
+        // Crear un grupo de capas
+        var overlays = {
+            "Afectaciones 2008": afectacionesLayer,
+            "Infra ITRF 2008": infraLayer,
+            "Vías ITRF 2008": viasLayer
+        };
+
+        // Agregamos un control de capas
+        L.control.layers(null, overlays).addTo(map);
+
+        // Añadimos las capas al mapa
+        afectacionesLayer.addTo(map);
+        infraLayer
+        viasLayer
+        
+    </script>
+
+</body>
+
+</html>
